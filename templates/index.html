@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Khali Spa – Cafeteria Seat Availability</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>☕ Khali Spa</h1>
+    <p>Real-time cafeteria seat availability</p>
+  </header>
+
+  <main>
+
+    <!-- ── Live Stats Cards ── -->
+    <section class="stats-grid">
+      <div class="card total">
+        <span class="icon">🪑</span>
+        <h2 id="total">--</h2>
+        <p>Total Chairs</p>
+      </div>
+      <div class="card free">
+        <span class="icon">✅</span>
+        <h2 id="free">--</h2>
+        <p>Free Seats</p>
+      </div>
+      <div class="card occupied">
+        <span class="icon">🔴</span>
+        <h2 id="occupied">--</h2>
+        <p>Occupied Seats</p>
+      </div>
+      <div class="card percent">
+        <span class="icon">📊</span>
+        <h2 id="percent">--%</h2>
+        <p>Occupancy</p>
+      </div>
+    </section>
+
+    <!-- ── Progress Bar ── -->
+    <section class="progress-section">
+      <label>Occupancy Level</label>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </section>
+
+    <!-- ── Live Camera Feed ── -->
+    <section class="feed-section">
+      <h3>📷 Live Camera Feed</h3>
+      <img id="liveFeed" src="/snapshot" alt="Live Feed" />
+    </section>
+
+    <!-- ── Demo Upload Section ── -->
+    <section class="demo-section">
+      <h3>🖼️ Demo Mode – Upload a Cafeteria Image</h3>
+      <input type="file" id="imageUpload" accept="image/*" />
+      <button onclick="uploadImage()">Analyse Image</button>
+      <p id="uploadStatus"></p>
+      <img id="uploadedResult" src="" alt="" style="display:none;" />
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Khali Spa &copy; 2025 – Built for Campus Convenience</p>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
