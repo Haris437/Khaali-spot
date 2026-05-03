@@ -16,9 +16,13 @@ function fetchStats() {
 
 // ── Refresh live camera snapshot every 3 seconds ─────────────────────────────
 function refreshSnapshot() {
-  const img = document.getElementById("liveFeed");
-  // Append timestamp to prevent browser caching the old image
-  img.src = "/snapshot?t=" + new Date().getTime();
+  fetch("/snapshot?t=" + new Date().getTime())
+    .then(res => {
+      if (res.status === 204) return; // no image yet, do nothing
+      if (res.ok) {
+        document.getElementById("liveFeed").src = "/snapshot?t=" + new Date().getTime();
+      }
+    });
 }
 
 // Start polling

@@ -75,17 +75,13 @@ def status():
 
 @app.route("/snapshot")
 def snapshot():
-    """Serves the latest annotated frame."""
     path = "static/output/frame.jpg"
-    if os.path.exists(path):
-        return send_file(path, mimetype="image/jpeg")
-    else:
-        # Return a blank placeholder if no frame yet
-        blank = np.zeros((480, 640, 3), dtype=np.uint8)
-        cv2.putText(blank, "Waiting for camera...", (100, 240),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        cv2.imwrite(path, blank)
-        return send_file(path, mimetype="image/jpeg")
+    os.makedirs("static/output", exist_ok=True)  # ensure folder exists
+    if not os.path.exists(path):
+        # Return a simple JSON response instead of a file when nothing uploaded yet
+        from flask import Response
+        return Response(status=204)  # 204 = No Content, no error
+    return send_file(path, mimetype="image/jpeg")
 
 
 @app.route("/demo")
