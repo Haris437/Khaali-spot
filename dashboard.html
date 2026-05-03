@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Khali Spa – Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body class="dashboard-body">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>☕</span>
+      <h2>Khali Spa</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('overview')">
+        <span>🏠</span> Overview
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('upload')">
+        <span>📷</span> Upload Image
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('history')">
+        <span>📊</span> History
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('settings')">
+        <span>⚙️</span> Settings
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('about')">
+        <span>ℹ️</span> About
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ user[0]|upper }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ user }}</span>
+        <span class="user-role">Student</span>
+      </div>
+      <a href="/logout" class="logout-btn" title="Logout">⏻</a>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <h2 id="section-title">Overview</h2>
+        <span class="breadcrumb">Dashboard / Overview</span>
+      </div>
+      <div class="header-right">
+        <div class="status-badge" id="statusBadge">● Live</div>
+        <span class="header-time" id="headerTime"></span>
+      </div>
+    </header>
+
+    <!-- ── SECTION: Overview ── -->
+    <section id="section-overview" class="section active">
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="card total">
+          <div class="card-icon">🪑</div>
+          <div class="card-info">
+            <h2 id="total">0</h2>
+            <p>Total Chairs</p>
+          </div>
+        </div>
+        <div class="card free">
+          <div class="card-icon">✅</div>
+          <div class="card-info">
+            <h2 id="free">0</h2>
+            <p>Free Seats</p>
+          </div>
+        </div>
+        <div class="card occupied">
+          <div class="card-icon">🔴</div>
+          <div class="card-info">
+            <h2 id="occupied">0</h2>
+            <p>Occupied</p>
+          </div>
+        </div>
+        <div class="card percent">
+          <div class="card-icon">📊</div>
+          <div class="card-info">
+            <h2 id="percent">0%</h2>
+            <p>Occupancy</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <span>Occupancy Level</span>
+          <span id="progressLabel">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <!-- Camera Feed + Quick Upload -->
+      <div class="feed-upload-grid">
+
+        <div class="feed-box">
+          <div class="box-header">
+            <h3>📷 Live Camera Feed</h3>
+            <span class="refresh-tag" id="lastUpdated">Not updated yet</span>
+          </div>
+          <div class="feed-wrapper">
+            <img id="liveFeed" src="" alt="No image yet" />
+            <div class="feed-placeholder" id="feedPlaceholder">
+              📷 Upload an image to see detection results
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-upload-box">
+          <div class="box-header">
+            <h3>⚡ Quick Capture</h3>
+          </div>
+          <p class="upload-hint">Upload a cafeteria photo to get the current seat availability instantly.</p>
+          <label class="upload-label" for="quickUpload">
+            <span>📁</span> Choose Image
+          </label>
+          <input type="file" id="quickUpload" accept="image/*" style="display:none" onchange="quickUploadImage()"/>
+          <div id="uploadFileName" class="upload-filename">No file selected</div>
+          <button class="analyse-btn" onclick="quickUploadImage()">🔍 Analyse Now</button>
+          <div id="uploadStatus" class="upload-status"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── SECTION: Upload Image ── -->
+    <section id="section-upload" class="section">
+      <div class="section-card">
+        <h3>📤 Upload Cafeteria Image</h3>
+        <p>Upload a photo of the cafeteria to detect seat availability.</p>
+        <label class="upload-label" for="fullUpload">
+          <span>📁</span> Choose Image
+        </label>
+        <input type="file" id="fullUpload" accept="image/*" style="display:none" onchange="updateFileName()"/>
+        <div id="fullUploadFileName" class="upload-filename">No file selected</div>
+        <button class="analyse-btn" onclick="fullUploadImage()">🔍 Analyse Image</button>
+        <div id="fullUploadStatus" class="upload-status"></div>
+        <img id="fullUploadResult" src="" style="display:none; margin-top:20px; width:100%; border-radius:12px;"/>
+      </div>
+    </section>
+
+    <!-- ── SECTION: History (dummy) ── -->
+    <section id="section-history" class="section">
+      <div class="section-card">
+        <h3>📊 Detection History</h3>
+        <p style="color:#aaa; margin-bottom:20px;">Recent seat availability snapshots.</p>
+        <table class="history-table">
+          <thead>
+            <tr><th>Time</th><th>Total</th><th>Free</th><th>Occupied</th><th>Occupancy</th></tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="5" style="text-align:center; color:#555;">No history yet. Upload an image to start.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── SECTION: Settings (dummy) ── -->
+    <section id="section-settings" class="section">
+      <div class="section-card">
+        <h3>⚙️ Settings</h3>
+        <div class="settings-group">
+          <label>Detection Sensitivity</label>
+          <input type="range" min="1" max="10" value="7" class="slider"/>
+        </div>
+        <div class="settings-group">
+          <label>Auto-refresh Interval</label>
+          <select class="settings-select">
+            <option>Every 3 seconds</option>
+            <option>Every 5 seconds</option>
+            <option>Every 10 seconds</option>
+          </select>
+        </div>
+        <div class="settings-group">
+          <label>Notifications</label>
+          <label class="toggle">
+            <input type="checkbox" checked/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <button class="analyse-btn" onclick="alert('Settings saved!')">💾 Save Settings</button>
+      </div>
+    </section>
+
+    <!-- ── SECTION: About (dummy) ── -->
+    <section id="section-about" class="section">
+      <div class="section-card">
+        <h3>ℹ️ About Khali Spa</h3>
+        <p style="color:#aaa; line-height:1.8;">
+          <strong style="color:#00d4ff;">Khali Spa</strong> is a real-time cafeteria seat availability 
+          tracker built for university campuses. Using computer vision and YOLOv8, it detects 
+          occupied and free seats from a camera feed and displays live availability to students.<br/><br/>
+          Students no longer need to walk all the way to the cafeteria to find it full — 
+          they can check availability from their classroom in seconds.<br/><br/>
+          <strong style="color:#00d4ff;">Version:</strong> 1.0 MVP &nbsp;|&nbsp;
+          <strong style="color:#00d4ff;">Model:</strong> YOLOv8n &nbsp;|&nbsp;
+          <strong style="color:#00d4ff;">Built with:</strong> Python, Flask, OpenCV
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

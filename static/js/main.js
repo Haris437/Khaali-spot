@@ -1,82 +1,145 @@
-// ── Auto-refresh stats every 3 seconds ──────────────────────────────────────
-function fetchStats() {
-  fetch("/status")
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("total").textContent    = data.total_chairs;
-      document.getElementById("free").textContent     = data.free;
-      document.getElementById("occupied").textContent = data.occupied;
-      document.getElementById("percent").textContent  = data.occupancy_percent + "%";
+// ── Section Navigation ────────────────────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-      // Update progress bar width
-      document.getElementById("progressBar").style.width = data.occupancy_percent + "%";
-    })
-    .catch(err => console.error("Stats fetch error:", err));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('section-title').textContent =
+    name.charAt(0).toUpperCase() + name.slice(1);
+
+  event.currentTarget.classList.add('active');
 }
 
-// ── Refresh live camera snapshot every 3 seconds ─────────────────────────────
+// ── Clock ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('headerTime').textContent =
+    now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Update stat cards with real data ─────────────────────────────────────────
+function updateStats(data) {
+  document.getElementById('total').textContent    = data.total_chairs;
+  document.getElementById('free').textContent     = data.free;
+  document.getElementById('occupied').textContent = data.occupied;
+  document.getElementById('percent').textContent  = data.occupancy_percent + '%';
+  document.getElementById('progressBar').style.width = data.occupancy_percent + '%';
+  document.getElementById('progressLabel').textContent = data.occupancy_percent + '%';
+}
+
+// ── Fetch live stats every 3 seconds ─────────────────────────────────────────
+function fetchStats() {
+  fetch('/status')
+    .then(r => r.json())
+    .then(data => updateStats(data))
+    .catch(err => console.error('Stats error:', err));
+}
+setInterval(fetchStats, 3000);
+fetchStats();
+
+// ── Refresh snapshot image ────────────────────────────────────────────────────
 function refreshSnapshot() {
-  fetch("/snapshot?t=" + new Date().getTime())
+  fetch('/snapshot?t=' + Date.now())
     .then(res => {
-      if (res.status === 204) return; // no image yet, do nothing
+      if (res.status === 204) return;
       if (res.ok) {
-        document.getElementById("liveFeed").src = "/snapshot?t=" + new Date().getTime();
+        const img = document.getElementById('liveFeed');
+        const placeholder = document.getElementById('feedPlaceholder');
+        img.src = '/snapshot?t=' + Date.now();
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        document.getElementById('lastUpdated').textContent =
+          'Updated at ' + new Date().toLocaleTimeString();
       }
     });
 }
-
-// Start polling
-setInterval(fetchStats,      3000);
 setInterval(refreshSnapshot, 3000);
 
-// Run once immediately on page load
-fetchStats();
-refreshSnapshot();
+// ── Add row to history table ──────────────────────────────────────────────────
+function addHistoryRow(data) {
+  const tbody = document.getElementById('historyBody');
+  const time  = new Date().toLocaleTimeString();
 
+  // Remove "no history" placeholder if present
+  if (tbody.rows[0] && tbody.rows[0].cells[0].colSpan === 5) {
+    tbody.innerHTML = '';
+  }
 
-// ── Demo Mode: Upload Image ───────────────────────────────────────────────────
-function uploadImage() {
-  const fileInput  = document.getElementById("imageUpload");
-  const statusText = document.getElementById("uploadStatus");
-  const resultImg  = document.getElementById("uploadedResult");
+  const row = `<tr>
+    <td>${time}</td>
+    <td>${data.total_chairs}</td>
+    <td style="color:#00e676">${data.free}</td>
+    <td style="color:#ff5252">${data.occupied}</td>
+    <td>${data.occupancy_percent}%</td>
+  </tr>`;
+
+  tbody.insertAdjacentHTML('afterbegin', row);
+}
+
+// ── Quick Upload (Overview section) ──────────────────────────────────────────
+function quickUploadImage() {
+  const fileInput  = document.getElementById('quickUpload');
+  const statusEl   = document.getElementById('uploadStatus');
+  const nameEl     = document.getElementById('uploadFileName');
 
   if (!fileInput.files.length) {
-    statusText.textContent = "⚠️ Please select an image first.";
+    fileInput.click();
     return;
   }
 
+  nameEl.textContent = fileInput.files[0].name;
+  statusEl.textContent = '⏳ Analysing...';
+
   const formData = new FormData();
-  formData.append("image", fileInput.files[0]);
+  formData.append('image', fileInput.files[0]);
 
-  statusText.textContent = "⏳ Analysing image...";
+  fetch('/upload', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { statusEl.textContent = '❌ ' + data.error; return; }
+      updateStats(data);
+      refreshSnapshot();
+      addHistoryRow(data);
+      statusEl.textContent = `✅ Free: ${data.free} | Occupied: ${data.occupied} | Total: ${data.total_chairs}`;
+    })
+    .catch(() => { statusEl.textContent = '❌ Upload failed. Try again.'; });
+}
 
-  fetch("/upload", {
-    method: "POST",
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      statusText.textContent = "❌ Error: " + data.error;
-      return;
-    }
+// ── Full Upload (Upload section) ──────────────────────────────────────────────
+function updateFileName() {
+  const f = document.getElementById('fullUpload').files[0];
+  if (f) document.getElementById('fullUploadFileName').textContent = f.name;
+}
 
-    // Update the dashboard stats with results from uploaded image
-    document.getElementById("total").textContent    = data.total_chairs;
-    document.getElementById("free").textContent     = data.free;
-    document.getElementById("occupied").textContent = data.occupied;
-    document.getElementById("percent").textContent  = data.occupancy_percent + "%";
-    document.getElementById("progressBar").style.width = data.occupancy_percent + "%";
+function fullUploadImage() {
+  const fileInput = document.getElementById('fullUpload');
+  const statusEl  = document.getElementById('fullUploadStatus');
+  const resultImg = document.getElementById('fullUploadResult');
 
-    statusText.textContent =
-      `✅ Done! Free: ${data.free} | Occupied: ${data.occupied} | Total: ${data.total_chairs}`;
+  if (!fileInput.files.length) { fileInput.click(); return; }
 
-    // Show the annotated result image
-    resultImg.src     = "/snapshot?t=" + new Date().getTime();
-    resultImg.style.display = "block";
-  })
-  .catch(err => {
-    statusText.textContent = "❌ Failed to analyse. Try again.";
-    console.error(err);
-  });
+  statusEl.textContent = '⏳ Analysing image...';
+
+  const formData = new FormData();
+  formData.append('image', fileInput.files[0]);
+
+  fetch('/upload', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { statusEl.textContent = '❌ ' + data.error; return; }
+      updateStats(data);
+      addHistoryRow(data);
+      statusEl.textContent = `✅ Free: ${data.free} | Occupied: ${data.occupied} | Total: ${data.total_chairs}`;
+      resultImg.src = '/snapshot?t=' + Date.now();
+      resultImg.style.display = 'block';
+
+      const img = document.getElementById('liveFeed');
+      const placeholder = document.getElementById('feedPlaceholder');
+      img.src = '/snapshot?t=' + Date.now();
+      img.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+    })
+    .catch(() => { statusEl.textContent = '❌ Upload failed.'; });
 }
