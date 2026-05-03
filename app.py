@@ -5,13 +5,11 @@ import threading
 import time
 import os
 import numpy as np
-from PIL import Image
-import io
 
 from detector import run_detection
 
 app = Flask(__name__)
-app.secret_key = "khali_spa_secret_2025"
+app.secret_key = "khaali_spot_secret_2025"
 CORS(app)
 
 # ─── Shared state ─────────────────────────────────────────────────────────────
@@ -40,14 +38,14 @@ def webcam_loop():
         time.sleep(2)
     cap.release()
 
-import os
-IS_SERVER = os.environ.get("RENDER") is not None
+# Detect if running on a cloud server (Render or Hugging Face)
+IS_SERVER = os.environ.get("RENDER") is not None or os.environ.get("SPACE_ID") is not None
 
 if not IS_SERVER:
     webcam_thread = threading.Thread(target=webcam_loop, daemon=True)
     webcam_thread.start()
 else:
-    print("[INFO] Running on server — webcam disabled. Use /upload for demo mode.")
+    print("[INFO] Running on server — webcam disabled. Use upload for demo mode.")
 
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
@@ -62,7 +60,6 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        # Dummy login — accept any non-empty username/password
         if username and password:
             session["user"] = username
             return redirect(url_for("dashboard"))
@@ -117,4 +114,5 @@ def upload():
 # ─── Entry point ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     os.makedirs("static/output", exist_ok=True)
-    app.run(debug=True, threaded=True, port=5000)
+    port = int(os.environ.get("PORT", 7860))
+    app.run(debug=False, threaded=True, host="0.0.0.0", port=port)

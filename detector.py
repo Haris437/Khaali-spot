@@ -34,13 +34,13 @@ def run_detection(frame):
     from ultralytics import YOLO  # lazy import - only loads when needed
 
     # Resize to reduce memory during inference
-    frame = cv2.resize(frame, (640, 480))
+    frame = cv2.resize(frame, (1280, 720))
 
     # Load model
     model = YOLO("yolov8n.pt")
 
     # imgsz=320 uses significantly less RAM than default 640
-    results = model(frame, verbose=False, imgsz=320)[0]
+    results = model(frame, verbose=False, imgsz=640, conf=0.25)[0]
 
     person_boxes = []
     chair_boxes  = []
